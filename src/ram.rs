@@ -35,8 +35,10 @@ impl Ram {
                 i += 1;
             }
         }
+
+        ram
     }
-    
+
     pub fn write_byte(&mut self, address: u16, value: u8) {
         self.mem[address as usize] = value;
     }
