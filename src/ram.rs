@@ -28,11 +28,15 @@ impl Ram {
             [0xF0, 0x80, 0xF0, 0x80, 0x80],
         ];
         
-        let mut i = 0;3
-        for i in 0 .. 81 {
-            println!("RAM: {:?}", ram.mem[i]);
+        let mut i = 0;
+        for sprite in sprites.iter() {
+            for ch in sprite {
+                ram.mem[i] = *ch;
+                i += 1;
+            }
         }
     }
+    
     pub fn write_byte(&mut self, address: u16, value: u8) {
         self.mem[address as usize] = value;
     }
