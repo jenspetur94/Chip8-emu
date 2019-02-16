@@ -28,13 +28,16 @@ impl Ram {
             [0xF0, 0x80, 0xF0, 0x80, 0x80],
         ];
         
-        ram 
+        let mut i = 0;3
+        for i in 0 .. 81 {
+            println!("RAM: {:?}", ram.mem[i]);
+        }
     }
     pub fn write_byte(&mut self, address: u16, value: u8) {
         self.mem[address as usize] = value;
     }
 
-    pub fn reade_byte(&mut self, address: u16, value: u8) {
-
+    pub fn reade_byte(&mut self, address: u16) -> u8 {
+        self.mem[address as usize]
     }
 }
