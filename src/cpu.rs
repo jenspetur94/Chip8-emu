@@ -31,7 +31,8 @@ impl Cpu{
         let n = (instruction & 0x00F) as u8;
         let x = ((instruction & 0x0F00) >> 8) as u8;
         let y = ((instruction & 0x00F0) >> 4) as u8;
-        println!("nnn={:#X}, nn={:#X}, n={:#X}, x={:#X}, y={:#X}", nnn, nn, n, x, y);
+        let kk = (instruction & 0x00FF) as u8;
+        println!("nnn={:#X}, nn={:#X}, n={:#X}, x={:#X}, y={:#X}, k={:#X}", nnn, nn, n, x, y, kk);
 
         if self.prev_pc == self.pc {
             panic!("Increment PC !!!");
@@ -43,13 +44,21 @@ impl Cpu{
                 //goto nnn;
                 self.pc = nnn;
             },
+            0x3 => {
+                let vx = self.read_reg_vx(x);
+                if vx == kk {
+                    self.pc += 2;
+                }
+                self.pc += 2;
+            }
             0x6 => {
                 //vx = nn;
                 self.write_reg_vx(x, nn);
                 self.pc += 2;
             },
             0x7 => {
-                self.add_reg_vx(x, nn);
+                let vx = self.read_reg_vx(x);
+                self.write_reg_vx(x, vx.wrapping_add(nn));
                 self.pc += 2;
             },
             0xA => {
@@ -63,13 +72,14 @@ impl Cpu{
             },
             0xF => {
                 match (instruction & 0x00FF) {
+                    //I += Vx
                     0x1E => {
                         let vx = self.read_reg_vx(x);
                         self.i += vx as u16;
+                        self.pc += 2;
                     },
                     _ => panic!("Unrecognized instruction {:#X}:{:#X}", self.pc, instruction)
                 }
-                self.pc += 2;
             }
             _ => panic!("Unrecognized instruction {:#X}:{:#X}", self.pc, instruction)
         }
@@ -77,10 +87,6 @@ impl Cpu{
 
     fn write_reg_vx(&mut self, index: u8, value: u8){
         self.vx[index as usize] = value;
-    }
-
-    fn add_reg_vx(&mut self, index: u8, value: u8){
-        self.vx[index as usize] += value;
     }
 
     fn read_reg_vx(&mut self, index: u8) -> u8 {
