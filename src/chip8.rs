@@ -24,6 +24,7 @@ impl Chip8 {
 
     pub fn run_instruction(&mut self){
         self.cpu.run_instruction(&mut self.ram);
+        println!("Cpu state: {:?}", self.cpu);
     }
     
 }
