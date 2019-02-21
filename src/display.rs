@@ -45,6 +45,8 @@ impl Display {
                 }
             }
             print!("\n");
+
+            
         }
     }
 }
