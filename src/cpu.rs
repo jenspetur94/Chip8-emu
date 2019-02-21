@@ -42,6 +42,21 @@ impl Cpu{
         self.prev_pc = self.pc;
 
         match (instruction & 0xF000) >> 12 {
+            0x0 => {
+                match nn {
+                    0xE0 => {
+                        //clear screen
+                        bus.clear_screen();
+                        self.pc += 2;
+                    }
+                    0xEE => {
+                        //return from subroutine
+                        let addr = self.ret_stack.pop().unwrap();
+                        self.pc = addr;
+                    }
+                    _ => panic!("Unrecognized 0x00** instruction {:#X}:{:#X}", self.pc, instruction)
+                }
+            }
             0x1 => {
                 //goto nnn;
                 self.pc = nnn;
@@ -69,15 +84,56 @@ impl Cpu{
                 self.pc += 2;
             },
             0x8 => {
+                
+                let mut vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
                 match n {
                     0 => {
-                        //vx=vy
-                        let vy = self.read_reg_vx(y);
+                        //vx = vy
                         self.write_reg_vx(x, vy);
-                        self.pc += 2;
                     },
+                    1 => {
+                        //vx = vx | vy
+                        self.write_reg_vx(x, vx | vy);
+                    },
+                    2 => {
+                        //vx = vx&vy
+                        self.write_reg_vx(x, vx & vy);
+                    },
+                    3 => {
+                        // vx = vx ^ vy
+                        self.write_reg_vx(x, vx ^ vy);
+                    },
+                    4 => {
+                        //vx += vy
+                        let sum: u16 = vx as u16 + vy as u16;
+                        self.write_reg_vx(x, sum as u8);
+                        if sum > 0xFF {
+                            self.write_reg_vx(0xF, 1);
+                        } else {
+                            self.write_reg_vx(0xF, 0);
+                        }
+
+                    },
+                    5 => {
+                        let diff: i8 = vx as i8 - vy as i8;
+                        self.write_reg_vx(x, diff as u8);
+                        if diff < 0 {
+                            self.write_reg_vx(0xF, 1);
+                        } else {
+                            self.write_reg_vx(0xF, 0);
+                        }
+                    },
+                    6 => {
+                        //vx = vy = vy>>1
+                        self.write_reg_vx(0xF, vy & 0x1);
+                        self.write_reg_vx(y, vy >> 1);
+                        self.write_reg_vx(x, vy >> 1);
+                    }
                     _ => panic!("Unrecognized 0x8xy* instruction {:#X}:{:#X}", self.pc, instruction)
                 }
+                self.pc += 2;
+
             }
             0xA => {
                 //I = nnn
@@ -90,13 +146,22 @@ impl Cpu{
             },
             0xE => {
                 match nn {
-                    0xA1 => {
-                        //if(key() != vx) skip then next instruction
+                    0x9E => {
+                        //if(key() == vx) skip then next instruction
                         let key = self.read_reg_vx(x);
                         if bus.key_pressed(key) {
                             self.pc += 2;
                         } else {
                             self.pc += 4;
+                        }
+                    },                    
+                    0xA1 => {
+                        //if(key() != vx) skip then next instruction
+                        let key = self.read_reg_vx(x);
+                        if bus.key_pressed(key) {
+                            self.pc += 4;
+                        } else {
+                            self.pc += 2;
                         }
                     },
                     _ => panic!("Unrecognized 0xEx** instruction {:#X}:{:#X}", self.pc, instruction)
@@ -104,14 +169,29 @@ impl Cpu{
             }
             0xF => {
                 match (nn) {
-                    //I += Vx
+                    0x07 => {
+                        self.write_reg_vx(x, bus.get_delay_timer());
+                    },
+                    0x15 => {
+                        bus.set_delay_timer(self.read_reg_vx(x));
+                    },
+                    0x65 => {
+                        for index in 0..x+1 {
+                            let value = bus.ram_read_byte(self.i + index as u16);
+                            self.write_reg_vx(index, value);
+
+                        }
+                    },
                     0x1E => {
+                        //I += Vx
                         let vx = self.read_reg_vx(x);
                         self.i += vx as u16;
-                        self.pc += 2;
                     },
                     _ => panic!("Unrecognized 0xFx** instruction {:#X}:{:#X}", self.pc, instruction)
                 }
+
+                self.pc += 2;
+
             }
             _ => panic!("Unrecognized instruction {:#X}:{:#X}", self.pc, instruction)
         }
@@ -126,7 +206,7 @@ impl Cpu{
     }
 
     fn debug_draw_sprite(&mut self, bus: &mut Bus, x: u8, y: u8, height: u8){
-        println!("drawin sprite at ({}, {})", x, y);
+        println!("\n\ndrawin sprite at ({}, {})", x, y);
         let mut should_set_vf = false;
         for y in 0..height {
             let b = bus.ram_read_byte(self.i + y as u16);
@@ -139,6 +219,8 @@ impl Cpu{
         } else {
             self.write_reg_vx(0xF, 0);
         }
+        
+        bus.present_screen();
         
 
     }

@@ -31,11 +31,17 @@ impl Display {
             coord_x += 1;
             byte = byte << 1;
         }
-        self.present();
         flipped
     }
 
-    fn present(&self){
+    pub fn clear_screen(&mut self){
+        for y in 0..HEIGHT{
+            for x in 0..WIDTH{
+                self.screen[y][x] = 0;
+            }
+        }
+    }
+    pub fn present(&self){
         for y in 0..HEIGHT{
             for x in 0..WIDTH{
                 if self.screen[y][x] == 0 {
@@ -45,8 +51,6 @@ impl Display {
                 }
             }
             print!("\n");
-
-            
         }
     }
 }
