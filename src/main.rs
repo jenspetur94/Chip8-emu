@@ -2,12 +2,8 @@ use std::fs::File;
 use std::io::Read;
 use crate::chip8::Chip8;
 
-mod ram;
-mod cpu;
 mod chip8;
-mod display;
-mod keyboard;
-mod bus;
+mod cpu;
 
 fn main() {
     let mut file = File::open("Data/INVADERS").unwrap();
