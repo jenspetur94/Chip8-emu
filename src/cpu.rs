@@ -141,7 +141,9 @@ impl Cpu{
                 self.pc += 2;
             }
             0xD => {
-                self.debug_draw_sprite(bus, x, y, n);
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+                self.debug_draw_sprite(bus, vx, vy, n);
                 self.pc += 2;
             },
             0xE => {
@@ -168,7 +170,7 @@ impl Cpu{
                 }
             }
             0xF => {
-                match (nn) {
+                match nn {
                     0x07 => {
                         self.write_reg_vx(x, bus.get_delay_timer());
                     },

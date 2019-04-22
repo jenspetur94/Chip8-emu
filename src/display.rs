@@ -1,14 +1,14 @@
 const WIDTH: usize =  64;
-const HEIGHT: usize = 32;
+const HEIGHT: usize = 64;
 
 pub struct Display {
-    screen: [[u8; WIDTH]; HEIGHT],
+    screen: [[u8; HEIGHT]; WIDTH],
 }
 
 impl Display {
     pub fn new() -> Display {
         Display {
-            screen: [[0; WIDTH]; HEIGHT],
+            screen: [[0; HEIGHT]; WIDTH],
         }
     }
 
