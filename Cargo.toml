@@ -3,6 +3,10 @@ name = "chip-8_emulator"
 version = "0.1.0"
 authors = ["JP <jenspeturtrondarson@gmail.com>"]
 edition = "2018"
+builf = "build.rs"
 
 [dependencies]
-glium = "*"
+rand = "0.3.15"
+
+[dependencies.sdl2]
+git = "https://github.com/AngryLawyer/rust-sdl2"

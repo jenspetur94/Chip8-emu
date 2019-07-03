@@ -1,56 +1,63 @@
-const WIDTH: usize =  64;
-const HEIGHT: usize = 64;
+use sdl2;
+use sdl2::pixels;
+use sdl2::rect::Rect;
+use sdl2::render::Canvas;
+use sdl2::video::Window;
+
+use crate::DISPLAY_HEIGHT;
+use crate::DISPLAY_WIDTH;
+
+const SCALE_FACTOR: u32 = 20;
+const SCREEN_WIDTH: u32 = (DISPLAY_WIDTH as u32) * SCALE_FACTOR;
+const SCREEN_HEIGHT: u32 = (DISPLAY_HEIGHT as u32) * SCALE_FACTOR;
 
 pub struct Display {
-    screen: [[u8; HEIGHT]; WIDTH],
+    canvas: Canvas<Window>,
 }
 
 impl Display {
-    pub fn new() -> Display {
-        Display {
-            screen: [[0; HEIGHT]; WIDTH],
+    pub fn new(sdl_context: &sdl2::Sdl) -> Display {
+        let video_subsys = sdl_context.video().unwrap();
+        let window = video_subsys
+            .window(
+                "rust-sdl2_gfx: draw line & FPSManager",
+                SCREEN_WIDTH,
+                SCREEN_HEIGHT,
+            )
+            .position_centered()
+            .opengl()
+            .build()
+            .unwrap();
+        let mut canvas = window.into_canvas().build().unwrap();
+
+        canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
+        canvas.clear();
+        canvas.present();
+
+        
+        Display{
+            canvas: canvas,
         }
     }
 
-    pub fn debug_draw_byte(&mut self, mut byte: u8, x: u8, y: u8) -> bool{
-        let mut flipped = false;
-        let mut coord_x = x as usize;
-        let coord_y = y as usize;
+    pub fn draw(&mut self, pixels: &[[u8; DISPLAY_WIDTH]; DISPLAY_HEIGHT]){
+        for (y, row) in pixels.iter().enumerate() {
+            for (x, &col) in row.iter().enumerate() {
+                let x = (x as u32) * SCALE_FACTOR;
+                let y = (y as u32) * SCALE_FACTOR;
 
-        for _ in 0..8 {
-            match (byte & 0b1000_0000) >> 7 {
-                0 => {
-                    if self.screen[coord_y][coord_x] == 1{
-                        flipped = true;
-                    }
-                    self.screen[coord_y][coord_x] = 0;  
-                }
-                1 => self.screen[coord_y][coord_x] = 1,
-                _ =>  unreachable!()
+                self.canvas.set_draw_color(color(col));
+                let _ = self.canvas.fill_rect(Rect::new(x as i32, y as i32, SCALE_FACTOR, SCALE_FACTOR));
             }
-            coord_x += 1;
-            byte = byte << 1;
         }
-        flipped
+        self.canvas.present();
     }
-
-    pub fn clear_screen(&mut self){
-        for y in 0..HEIGHT{
-            for x in 0..WIDTH{
-                self.screen[y][x] = 0;
-            }
-        }
+}
+fn color(value: u8) -> pixels::Color {
+    if value == 0 {
+        pixels::Color::RGB(0, 0, 0)
     }
-    pub fn present(&self){
-        for y in 0..HEIGHT{
-            for x in 0..WIDTH{
-                if self.screen[y][x] == 0 {
-                    print!("_");
-                } else {
-                    print!("#");
-                }
-            }
-            print!("\n");
-        }
+    else {
+        pixels::Color::RGB(0, 250, 0)
     }
 }
